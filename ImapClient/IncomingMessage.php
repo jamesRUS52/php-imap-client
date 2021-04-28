@@ -332,12 +332,14 @@ class IncomingMessage
         $attachments = array();
         foreach ($this->getSections(self::SECTION_ATTACHMENTS) as $section) {
             $obj = $this->getSection($section);
-            $attachment = new IncomingMessageAttachment($obj);
-            $objNew = new \stdClass();
-            $objNew->name = $attachment->name;
-            $objNew->body = $attachment->body;
-            $objNew->info = $obj;
-            $attachments[] = $objNew;
+            if (is_object($obj->structure) && property_exists($obj->structure, 'disposition') ) {
+                $attachment = new IncomingMessageAttachment($obj);
+                $objNew = new \stdClass();
+                $objNew->name = $attachment->name;
+                $objNew->body = $attachment->body;
+                $objNew->info = $obj;
+                $attachments[] = $objNew;
+            }
         }
         $this->attachments = $attachments;
     }
@@ -394,10 +396,10 @@ class IncomingMessage
         if (isset($objNew->plain)) {
             switch ($objNew->plain->structure->encoding) {
                 case 3:
-                    $objNew->text = imap_base64(mb_convert_encoding( $objNew->plain, "utf-8", $objNew->plain->charset ));
+                    $objNew->text = imap_base64(iconv($objNew->plain->charset, "utf-8//TRANSLIT//IGNORE", $objNew->plain));
                     break;
                 default:
-                    $objNew->text = quoted_printable_decode(mb_convert_encoding( $objNew->plain, "utf-8", $objNew->plain->charset ));
+                    $objNew->text = quoted_printable_decode(iconv($objNew->plain->charset, "utf-8//TRANSLIT//IGNORE", $objNew->plain));
                     break;
             }
             $objNew->types[] = 'text';
@@ -596,18 +598,14 @@ class IncomingMessage
     public function convertToUtf8($str, $charset = 'ISO-8859-1')
     {
         if ($charset == 'default') {
-            $charset = 'utf-8';
+            $charset = 'UTF-8';
         }
 
-        $encoding = mb_detect_encoding($str, mb_detect_order(), false);
-
-        if($encoding == 'UTF-8'){
+        if ($charset == 'UTF-8') {
             $str = mb_convert_encoding($str, 'UTF-8', 'UTF-8');
+        } else {
+            $str = iconv($charset, 'UTF-8//TRANSLIT//IGNORE', $str);
         }
-
-        $str = iconv(mb_detect_encoding($str, mb_detect_order(), false), "UTF-8//IGNORE", $str);
-//        $str = iconv($charset, 'UTF-8//IGNORE', $str);
-
         return $str;
     }
 
