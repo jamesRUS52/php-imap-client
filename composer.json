@@ -1,9 +1,9 @@
 {
-  "name": "ssilence/php-imap-client",
+  "name": "james.rus52/php-imap-client",
   "type": "library",
   "description": "Php imap client",
   "keywords": ["php", "imap", "client"],
-  "homepage": "https://github.com/SSilence/php-imap-client",
+  "homepage": "https://github.com/jamesRUS52/php-imap-client",
   "license": "MIT",
   "authors": [
       {
